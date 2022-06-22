@@ -7,14 +7,14 @@ import signal
 import time
 from datetime import datetime
 from email.policy import default
-
+from aiosmtpd.smtp import AuthResult
 from aiosmtpd.controller import Controller
 from paho.mqtt import publish
 
 
 defaults = {
     "SMTP_PORT": 1025,
-    "MQTT_HOST": "localhost",
+    "MQTT_HOST": "mqtt",
     "MQTT_PORT": 1883,
     "MQTT_USERNAME": "",
     "MQTT_PASSWORD": "",
@@ -22,7 +22,7 @@ defaults = {
     "MQTT_PAYLOAD": "ON",
     "MQTT_RESET_TIME": "300",
     "MQTT_RESET_PAYLOAD": "OFF",
-    "SAVE_ATTACHMENTS": "True",
+    "SAVE_ATTACHMENTS": "False",
     "SAVE_ATTACHMENTS_DURING_RESET_TIME": "False",
     "DEBUG": "False",
 }
@@ -136,6 +136,9 @@ class EMQTTHandler:
         log.info("Quitting...")
         self.quit = True
 
+def authenticator(server, session, envelope, mechanism, auth_data):
+    return AuthResult(success=True)
+
 
 if __name__ == "__main__":
     log.debug(", ".join([f"{k}={v}" for k, v in config.items()]))
@@ -153,6 +156,9 @@ if __name__ == "__main__":
         loop=loop,
         hostname="0.0.0.0",
         port=config["SMTP_PORT"],
+        authenticator=authenticator,
+        auth_required=True,
+        auth_require_tls=False
     )
     c.start()
     log.info("Running")
